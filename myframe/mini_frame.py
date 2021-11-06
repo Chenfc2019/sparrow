@@ -5,6 +5,7 @@
 # @Date ：2021/11/4 上午8:38
 
 import re
+import logging
 from .sql_utils import sql_get_data
 
 url_map = {}
@@ -52,5 +53,42 @@ def application(environ, start_response):
     print('path: ', path)
 
     if path in url_map and callable(url_map[path]):
+        write_log(path)
         return url_map[path]()
+    write_log(path + ' not found')
     return 'resource not found'
+
+def write_log(log_msg):
+    # 第一步，创建一个logger
+    logger = logging.getLogger()
+    # Log等级总开关
+    logger.setLevel(logging.INFO)
+
+    # 第二步，创建一个handler，用于写入日志文件
+    # log_path = os.path.dirname(os.getcwd()) + '/logs/'
+    logfile = './logs/sparrow.log'
+    fh = logging.FileHandler(logfile, mode='a')
+    # 输出到file的log等级的开关
+    fh.setLevel(logging.INFO)
+
+    # 输出到console的log等级的开关
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+
+    # 第三步，定义handler的输出格式
+    formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # 第四步，将logger添加到handler里面
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    # logging.basicConfig函数对日志的输出格式及方式做相关配置
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+    # 由于日志基本配置中级别设置为DEBUG，所以一下打印信息将会全部显示在控制台上
+    logging.info(log_msg)
+    logging.debug(log_msg)
+    logging.warning(log_msg)
+    logging.error(log_msg)
+    logging.critical(log_msg)
