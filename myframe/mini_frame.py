@@ -4,6 +4,42 @@
 # @Author ：orange
 # @Date ：2021/11/4 上午8:38
 
+import re
+from .sql_utils import sql_get_data
+
+url_map = {}
+
+
+# 带参数的装饰器实现路由功能
+def route(path):
+    def set_func(func):
+        url_map[path] = func
+        def call_func(*args, **kwargs):
+            return func(*args, **kwargs)
+        return call_func
+    return set_func
+
+
+@route('/index')
+def index():
+    with open('./template/index.html', 'r') as f:
+        file_content = f.read()
+    sql_text = 'select * from hero;'
+    result = sql_get_data(sql_text)
+    html = '<table border="1">'
+    for info in result:
+        html += f'<tr><th>{info[0]}</th><th>{info[1]}</th><th>{info[2]}</th></tr>'
+    html += '</table>'
+    return re.sub(r'{content}', html, file_content)
+
+
+@route('/login')
+def login():
+    with open('./template/login.html', 'r') as f:
+        file_content = f.read()
+    return file_content
+
+
 def application(environ, start_response):
     """
     实现uwsgi协议的函数
@@ -12,21 +48,9 @@ def application(environ, start_response):
     :return:
     """
     start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-    print('path: ', environ.get('path'))
-    if environ.get('path') == '/index.py':
-        return index()
-    elif environ.get('path') == '/login.py':
-        return login()
-    return 'hello'
+    path = environ.get('path')
+    print('path: ', path)
 
-
-def index():
-    with open('./template/index.html', 'r') as f:
-        file_content = f.read()
-    return file_content
-
-
-def login():
-    with open('./template/login.html', 'r') as f:
-        file_content = f.read()
-    return file_content
+    if path in url_map and callable(url_map[path]):
+        return url_map[path]()
+    return 'resource not found'

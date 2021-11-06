@@ -25,6 +25,8 @@ class Server(object):
         # 3. 监听请求
         self.tcp_socket.listen(10)
         print(f'server start with: 127.0.0.1:{port}')
+        self.status = None
+        self.headers = None
 
     def service_clint(self, new_socket):
         """
@@ -34,9 +36,12 @@ class Server(object):
         """
         # 1. 接受浏览器请求
         request = new_socket.recv(1024)
-        print('req_data: ', request.decode('utf-8'))
+        req_data = request.decode('utf-8')
+        print('req_data: ', req_data)
         # GET /index.html HTTP/1.1
-        request_lines = request.decode('utf-8').splitlines()
+        if not req_data:
+            return
+        request_lines = req_data.splitlines()
         print(request_lines[0])
         # 匹配出请求的文件
         ret = re.match(r'[^/]+(/[^ ]*)', request_lines[0])
@@ -47,7 +52,9 @@ class Server(object):
                 file_name = '/index.html'
         else:
             print('未找到文件')
-        if not file_name.endswith('.py'):
+
+        file_type = file_name.split('.')
+        if len(file_type) == 2 and file_type[1] in ['html', 'css', 'js']:
             # 2. 返回http格式的数据
             # 读出请求的静态文件放在body中返回给前端
             try:
@@ -56,7 +63,6 @@ class Server(object):
                 print('html_content: ', html_content)
                 # http header
                 response = 'HTTP/1.1 200 OK\r\n'
-                # 空行
                 response += '\r\n'
                 # http body
                 # tcp传输需要编码成字节流
@@ -70,7 +76,7 @@ class Server(object):
                 response += 'file not found'
                 new_socket.send(response.encode('utf-8'))
         else:
-            # 非静态请求
+            # 非静态请求，将请求转发到框架处理
             env = dict()
             env['path'] = file_name
             body = mini_frame.application(env, self.set_response_header)
