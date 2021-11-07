@@ -38,7 +38,7 @@ def index():
 def login():
     with open('./template/login.html', 'r') as f:
         file_content = f.read()
-    return file_content
+    return re.sub(r'{content}', 'hello', file_content)
 
 
 def application(environ, start_response):

@@ -116,7 +116,7 @@ def main():
     if len(input_args) == 2:
         port = input_args[1]
     try:
-        prot = int(port)
+        port = int(port)
     except Exception as e:
         print('输入端口号有误')
         raise ValueError
