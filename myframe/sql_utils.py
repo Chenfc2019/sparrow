@@ -20,9 +20,11 @@ class SqlUtil(object):
         cursor = self.conn.cursor()
         count = cursor.execute(sql_text)
         result = cursor.fetchall()
+        self.conn.commit()
         cursor.close()
         self.conn.close()
         return result
+
 
 def sql_get_data(sql_text):
     if not sql_text:
@@ -32,5 +34,5 @@ def sql_get_data(sql_text):
     return result
 
 if __name__ == '__main__':
-    result = sql_get_data('select * from hero;')
+    result = sql_get_data("insert into hero (name,power) values ('util_add',59);")
     print(result)

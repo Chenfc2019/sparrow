@@ -58,7 +58,10 @@ def application(environ, start_response):
     write_log(path + ' not found')
     return 'resource not found'
 
+
 def write_log(log_msg):
+    # https://www.cnblogs.com/xianyulouie/p/11041777.html
+    # https://www.cnblogs.com/xybaby/p/9197032.html
     # 第一步，创建一个logger
     logger = logging.getLogger()
     # Log等级总开关
