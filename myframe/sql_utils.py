@@ -33,6 +33,7 @@ def sql_get_data(sql_text):
     result = sql_util.execute_sql(sql_text)
     return result
 
+
 if __name__ == '__main__':
     result = sql_get_data("insert into hero (name,power) values ('util_add',59);")
     print(result)

@@ -10,10 +10,10 @@
 from myframe.sql_utils import sql_get_data
 
 
-class Model(type):
+class ModelMetaclass(type):
     def __new__(cls, name, base, attrs):
         """
-
+        在init方法前调用
         :param name: 类名
         :param base: 父类的名字
         :param attrs: 类属性
@@ -23,6 +23,13 @@ class Model(type):
             if isinstance(v, tuple):
                 mappings[k] = v
 
+        # {
+        #     'id': ('id', 'int'),
+        #     'name': ('name', 'varchar(30)'),
+        #     'power': ('power', 'int')
+        # }
+
+        # 删除子类的属性
         for k in mappings.keys():
             attrs.pop(k)
 
@@ -32,11 +39,7 @@ class Model(type):
         return type.__new__(cls, name, base, attrs)
 
 
-class Hero(metaclass=Model):
-    id = ('id', 'int')
-    name = ('name', 'varchar(30)')
-    power = ('power', 'int')
-
+class Model(metaclass=ModelMetaclass):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -45,9 +48,10 @@ class Hero(metaclass=Model):
         field = []
         args = []
         for k, v in self.__mapping__.items():
+            # 只添加实例中传入的字段
             if hasattr(self, v[0]):
                 field.append(v[0])
-            args.append(getattr(self, k, None))
+                args.append(getattr(self, k, None))
 
         temp_args = []
         for info in args:
@@ -61,7 +65,13 @@ class Hero(metaclass=Model):
         return result
 
 
+class Hero(Model):
+    id = ('id', 'int')
+    name = ('name', 'varchar(30)')
+    power = ('power', 'int')
+
+
 if __name__ == '__main__':
-    hero = Hero(name='orm_add', power=78)
+    hero = Hero(name='orm_11ha', power=78)
     hero.save()
 

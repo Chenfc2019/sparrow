@@ -6,6 +6,7 @@
 
 import re
 import logging
+import json
 from .sql_utils import sql_get_data
 
 url_map = {}
@@ -23,7 +24,7 @@ def route(path):
 
 @route('/index')
 def index():
-    with open('./template/index.html', 'r') as f:
+    with open('./template/index.html', 'r', encoding='utf-8') as f:
         file_content = f.read()
     sql_text = 'select * from hero;'
     result = sql_get_data(sql_text)
@@ -36,19 +37,28 @@ def index():
 
 @route('/login')
 def login():
-    with open('./template/login.html', 'r') as f:
+    with open('./template/login.html', 'r', encoding='utf-8') as f:
         file_content = f.read()
     return re.sub(r'{content}', 'hello', file_content)
+
+@route('/ret_json')
+def return_json():
+    dict = {
+        'name': 'zhaoyun',
+        'power': 90
+    }
+    return json.dumps(dict)
 
 
 def application(environ, start_response):
     """
-    实现uwsgi协议的函数
-    :param environ: 字典
-    :param start_response: 函数引用
+    实现WSGI协议的函数
+    :param environ: 上下文，字典类型
+    :param start_response: 可调用对象
     :return:
     """
-    start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+    start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+    # start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
     path = environ.get('path')
     print('path: ', path)
 
