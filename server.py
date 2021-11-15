@@ -11,6 +11,8 @@ import re
 import sys
 import socket
 import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 from myframe import mini_frame
 
@@ -27,6 +29,7 @@ class Server(object):
         print(f'server start with: 127.0.0.1:{port}')
         self.status = None
         self.headers = None
+        self.th_pool = ThreadPoolExecutor(max_workers=3)
 
     def service_clint(self, new_socket):
         """
@@ -76,11 +79,20 @@ class Server(object):
                 response += 'file not found'
                 new_socket.send(response.encode('utf-8'))
         else:
+            method = request_lines[0].split(' ')[0]
+            # 默认类型
+            # 将请求头的信息解析出来
+            content_type = 'text/html; charset=utf-8'
+            for info in request_lines:
+                if info.startwith('Content-Type'):
+                    content_type = info.split(' ')[1]
             # 非静态请求，将请求转发到框架处理
             env = dict()
             env['path'] = file_name
+            env['method'] = method
+            env['Content-Type'] = content_type
             body = mini_frame.application(env, self.set_response_header)
-            header = 'HTTP/1.1 404 NOT FOUND\r\n'
+            header = f'HTTP/1.1 {self.status}\r\n'
             for info in self.headers:
                 header += f"{info[0]}:{info[1]}\r\n"
 
@@ -91,6 +103,10 @@ class Server(object):
         # 关闭套接字
         new_socket.close()
 
+    def parse_param(self, request):
+
+        pass
+
     def set_response_header(self, status, headers):
         self.status = status
         self.headers = headers
@@ -100,14 +116,18 @@ class Server(object):
         while True:
             # 处理客户段的请求，返回客户段的套接字和客户端IP
             new_socket, client_addr = self.tcp_socket.accept()
-            p = multiprocessing.Process(target=self.service_clint, args=(new_socket, ))
-            p.start()
-            # 创建子进程时会复制父进程中的资源，new_socket被复制到子进程，父子进程中的new_socket只向同一个对象，
-            # 只有当父子都关闭之后，new_socket的引用计数变为0才会被回收
-            new_socket.close()
+            # 使用线程池来处理请求
+            self.th_pool.submit(self.service_clint, new_socket)
+        self.th_pool.shutdown()
 
-        # 5. 关闭链接
-        tcp_socket()
+        #     p = multiprocessing.Process(target=self.service_clint, args=(new_socket, ))
+        #     p.start()
+        #     # 创建子进程时会复制父进程中的资源，new_socket被复制到子进程，父子进程中的new_socket只向同一个对象，
+        #     # 只有当父子都关闭之后，new_socket的引用计数变为0才会被回收
+        #     new_socket.close()
+        #
+        # # 5. 关闭链接
+        # tcp_socket()
 
 
 def main():

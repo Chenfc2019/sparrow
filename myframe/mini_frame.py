@@ -57,8 +57,8 @@ def application(environ, start_response):
     :param start_response: 可调用对象
     :return:
     """
-    start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
-    # start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+    # start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+    start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
     path = environ.get('path')
     print('path: ', path)
 
