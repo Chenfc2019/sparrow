@@ -13,6 +13,7 @@ import socket
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 import threading
+from urllib import parse
 
 from myframe import mini_frame
 
@@ -40,7 +41,7 @@ class Server(object):
         # 1. 接受浏览器请求
         request = new_socket.recv(1024)
         req_data = request.decode('utf-8')
-        print('req_data: ', req_data)
+        print('req_data: ', req_data.splitlines())
         # GET /index.html HTTP/1.1
         if not req_data:
             return
@@ -79,19 +80,18 @@ class Server(object):
                 response += 'file not found'
                 new_socket.send(response.encode('utf-8'))
         else:
-            method = request_lines[0].split(' ')[0]
-            # 默认类型
-            # 将请求头的信息解析出来
-            content_type = 'text/html; charset=utf-8'
-            for info in request_lines:
-                if info.startwith('Content-Type'):
-                    content_type = info.split(' ')[1]
             # 非静态请求，将请求转发到框架处理
             env = dict()
             env['path'] = file_name
-            env['method'] = method
-            env['Content-Type'] = content_type
+
+            # 解析请求头和参数信息
+            query_dict, header_dict = self.parse_param(request_lines, env)
+            env['headers'] = header_dict
+            env['query_dict'] = query_dict
+
+            # 将请求转发给框架处理
             body = mini_frame.application(env, self.set_response_header)
+
             header = f'HTTP/1.1 {self.status}\r\n'
             for info in self.headers:
                 header += f"{info[0]}:{info[1]}\r\n"
@@ -103,9 +103,26 @@ class Server(object):
         # 关闭套接字
         new_socket.close()
 
-    def parse_param(self, request):
+    def parse_param(self, request, env: dict) -> tuple:
+        # request 为列表 ['POST /ret_json HTTP/1.1', 'Accept-Encoding: identity', 'Content-Length: 45', 'Host: 127.0.0.1:8080', 'User-Agent: Python-urllib/3.7', 'Content-Type: text/html', '', 'name%3Dhello%20world%26age%3D18%26like%3Dgame']
+        # 列表最后一个元素是请求数据
+        # 请求方法
+        method = request[0].split(' ')[0]
+        env['method'] = method
 
-        pass
+        # 参数字典
+        query_dict = {}
+        params_list = parse.unquote(request[-1]).split('&')
+        for param in params_list:
+            key, value = param.split('=')
+            query_dict[key] = value
+
+        # 请求头信息
+        header_dict = {}
+        for info in request[1:-2]:
+            key, value = info.split(': ')
+            header_dict[key] = value
+        return query_dict, header_dict
 
     def set_response_header(self, status, headers):
         self.status = status
