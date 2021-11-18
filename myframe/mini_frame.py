@@ -41,6 +41,7 @@ def login():
         file_content = f.read()
     return re.sub(r'{content}', 'hello', file_content)
 
+
 @route('/ret_json')
 def return_json():
     dict = {
@@ -57,10 +58,10 @@ def application(environ, start_response):
     :param start_response: 可调用对象
     :return:
     """
-    # start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
-    start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+    # start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+    content_type = environ.get('headers', {}).get('Content-Type', 'text/html; charset=utf-8')
+    start_response('200 OK', [('Content-Type', content_type)])
     path = environ.get('path')
-    print('path: ', path)
 
     if path in url_map and callable(url_map[path]):
         write_log(path)

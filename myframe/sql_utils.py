@@ -35,5 +35,7 @@ def sql_get_data(sql_text):
 
 
 if __name__ == '__main__':
-    result = sql_get_data("insert into hero (name,power) values ('util_add',59);")
+    # result = sql_get_data("insert into hero (name,power) values ('util_add',59);")
+    result = sql_get_data('select * from hero where id =1;')
     print(result)
+

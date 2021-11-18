@@ -41,7 +41,7 @@ class Server(object):
         # 1. 接受浏览器请求
         request = new_socket.recv(1024)
         req_data = request.decode('utf-8')
-        print('req_data: ', req_data.splitlines())
+        # print('req_data: ', req_data.splitlines())
         # GET /index.html HTTP/1.1
         if not req_data:
             return
@@ -107,15 +107,27 @@ class Server(object):
         # request 为列表 ['POST /ret_json HTTP/1.1', 'Accept-Encoding: identity', 'Content-Length: 45', 'Host: 127.0.0.1:8080', 'User-Agent: Python-urllib/3.7', 'Content-Type: text/html', '', 'name%3Dhello%20world%26age%3D18%26like%3Dgame']
         # 列表最后一个元素是请求数据
         # 请求方法
-        method = request[0].split(' ')[0]
+        first_item = request[0].split(' ')
+        method = first_item[0]
         env['method'] = method
 
         # 参数字典
         query_dict = {}
-        params_list = parse.unquote(request[-1]).split('&')
-        for param in params_list:
-            key, value = param.split('=')
-            query_dict[key] = value
+        # 判断请求方法，GET请求从URL提取参数，POST请求从body中提取参数
+        if method == 'GET':
+            url_params = first_item[1].split('?')[1].split('&')
+            env['path'] = first_item[1].split('?')[0]
+            for param in url_params:
+                key, value = param.split('=')
+                query_dict[key] = value
+        elif method == 'POST':
+            params_list = parse.unquote(request[-1]).split('&')
+            for param in params_list:
+                if not param and '=' in param:
+                    key, value = param.split('=')
+                    query_dict[key] = value
+        else:
+            pass
 
         # 请求头信息
         header_dict = {}

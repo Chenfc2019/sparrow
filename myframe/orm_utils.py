@@ -45,6 +45,10 @@ class Model(metaclass=ModelMetaclass):
             setattr(self, k, v)
 
     def save(self):
+        """
+        保存一条数据
+        :return:
+        """
         field = []
         args = []
         for k, v in self.__mapping__.items():
@@ -64,6 +68,37 @@ class Model(metaclass=ModelMetaclass):
         result = sql_get_data(sql_text)
         return result
 
+    def query_by_id(self, id):
+        """
+        根据ID查询记录
+        :return:
+        """
+        sql_text = f"select * from {self.__table__} where id = {id};"
+        result = sql_get_data(sql_text)
+        if len(result) > 1:
+            raise Exception
+        result = result[0]
+        self.id = result[0]
+        self.name = result[1]
+        self.power = result[2]
+
+
+    def update_by_id(self, id):
+        """
+        根据id更新记录
+        :param filter:
+        :return:
+        """
+        field_list = []
+        for k, v in self.__mapping__.items():
+            # 只添加实例中传入的字段
+            if hasattr(self, v[0]):
+                field_list.append(f"{k}={getattr(self, k)}")
+
+        sql_text = f"update {self.__table__} set {','.join(field_list)} where id = {id};"
+        print(sql_text)
+        result = sql_get_data(sql_text)
+
 
 class Hero(Model):
     id = ('id', 'int')
@@ -72,6 +107,10 @@ class Hero(Model):
 
 
 if __name__ == '__main__':
-    hero = Hero(name='orm_11ha', power=78)
-    hero.save()
+    # hero = Hero(name='orm_11ha', power=78)
+    # hero.save()
+    # hero.update_by_id(2)
 
+    her02 = Hero()
+    her02.query_by_id(1)
+    print(her02)
